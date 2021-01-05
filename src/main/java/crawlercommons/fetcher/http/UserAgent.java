@@ -17,7 +17,6 @@
 package crawlercommons.fetcher.http;
 
 import java.io.Serializable;
-import java.util.Locale;
 
 import crawlercommons.util.HttpFetcherVersion;
 
@@ -28,7 +27,7 @@ import crawlercommons.util.HttpFetcherVersion;
  * <li><tt>_agentName</tt>: Primary agent name.</li>
  * <li><tt>_emailAddress</tt>: The agent owners email address.</li>
  * <li><tt>_webAddress</tt>: A web site/address representing the agent owner.</li>
- * <li><tt>_browserVersion</tt>: Broswer version used for compatibility.</li>
+ * <li><tt>_browserVersion</tt>: Browser version used for compatibility.</li>
  * <li><tt>_crawlerVersion</tt>: Version of the user agents personal crawler. If
  * this is not set, it defaults to the http-fetcher maven artifact version.</li>
  * </ol>
@@ -40,62 +39,12 @@ public class UserAgent implements Serializable {
     public static final String DEFAULT_BROWSER_VERSION = "Mozilla/5.0";
     public static final String DEFAULT_CRAWLER_VERSION = HttpFetcherVersion.getVersion();
 
-    private final String agentName;
-    private final String emailAddress;
-    private final String webAddress;
-    private final String browserVersion;
-    private final String crawlerConfiguration;
+    private final String _agentName;
+    private final String _userAgentString;
 
-    /**
-     * Set user agent characteristics
-     * 
-     * @param agentName
-     *            an agent name string to associate with the crawler
-     * @param emailAddress
-     *            an agent email address string to associate with the crawler
-     * @param webAddress
-     *            a Web address string to associate with the crawler
-     */
-    public UserAgent(String agentName, String emailAddress, String webAddress) {
-        this(agentName, emailAddress, webAddress, DEFAULT_BROWSER_VERSION);
-    }
-
-    /**
-     * Set user agent characteristics
-     * 
-     * @param agentName
-     *            an agent name string to associate with the crawler
-     * @param emailAddress
-     *            an agent email address string to associate with the crawler
-     * @param webAddress
-     *            a Web address string to associate with the crawler
-     * @param browserVersion
-     *            a browser version to mimic
-     */
-    public UserAgent(String agentName, String emailAddress, String webAddress, String browserVersion) {
-        this(agentName, emailAddress, webAddress, browserVersion, DEFAULT_CRAWLER_VERSION);
-    }
-
-    /**
-     * Set user agent characteristics
-     * 
-     * @param agentName
-     *            an agent name string to associate with the crawler
-     * @param emailAddress
-     *            an agent email address string to associate with the crawler
-     * @param webAddress
-     *            a Web address string to associate with the crawler
-     * @param browserVersion
-     *            a browser version to mimic
-     * @param crawlerVersion
-     *            the version of your crawler/crawl agent
-     */
-    public UserAgent(String agentName, String emailAddress, String webAddress, String browserVersion, String crawlerVersion) {
-        this.agentName = agentName;
-        this.emailAddress = emailAddress;
-        this.webAddress = webAddress;
-        this.browserVersion = browserVersion;
-        this.crawlerConfiguration = crawlerVersion == null ? "" : "/" + crawlerVersion;
+    public UserAgent(Builder builder) {
+        this._agentName = builder._agentName;
+        this._userAgentString = builder._userAgentString;
     }
 
     /**
@@ -104,7 +53,7 @@ public class UserAgent implements Serializable {
      * @return User Agent name (String)
      */
     public String getAgentName() {
-        return agentName;
+        return _agentName;
     }
 
     /**
@@ -113,8 +62,90 @@ public class UserAgent implements Serializable {
      * @return User Agent String
      */
     public String getUserAgentString() {
-        // Mozilla/5.0 (compatible; mycrawler/1.0; +http://www.mydomain.com;
-        // mycrawler@mydomain.com)
-        return String.format(Locale.getDefault(), "%s (compatible; %s%s; +%s; %s)", browserVersion, getAgentName(), crawlerConfiguration, webAddress, emailAddress);
+        return _userAgentString;
     }
+
+    /**
+     * Builds a user agent with custom characteristics
+     * 
+     */
+    public static class Builder {
+
+        private String _agentName;
+        private String _emailAddress;
+        private String _webAddress;
+        private String _browserVersion = DEFAULT_BROWSER_VERSION;
+        private String _crawlerVersion = DEFAULT_CRAWLER_VERSION;
+        private String _userAgentString;
+
+        public Builder() {}
+
+        public Builder setAgentName(String _agentName) {
+            this._agentName = _agentName;
+            return this;
+        }
+
+        public Builder setEmailAddress(String _emailAddress) {
+            this._emailAddress = _emailAddress;
+            return this;
+        }
+
+        public Builder setWebAddress(String _webAddress) {
+            this._webAddress = _webAddress;
+            return this;
+        }
+
+        public Builder setBrowserVersion(String _browserVersion) {
+            this._browserVersion = _browserVersion;
+            return this;
+        }
+
+        public Builder setCrawlerVersion(String _crawlerVersion) {
+            this._crawlerVersion = _crawlerVersion;
+            return this;
+        }
+
+        public Builder setUserAgentString(String _userAgentString) {
+            this._userAgentString = _userAgentString;
+            return this;
+        }
+
+        /**
+         * Creates a string representing the user agent characteristics.
+         * 
+         * @return User Agent String
+         */
+        private String createUserAgentString() {
+            // Mozilla/5.0 (compatible; mycrawler/1.0; +http://www.mydomain.com;
+            // mycrawler@mydomain.com)
+            StringBuilder sb = new StringBuilder();
+            sb.append(_browserVersion);
+            sb.append(" (compatible; ");
+            sb.append(_agentName);
+            sb.append("/");
+            sb.append(_crawlerVersion);
+            if (_webAddress != null && !_webAddress.isEmpty()) {
+                sb.append("; +");
+                sb.append(_webAddress);
+            }
+            if (_emailAddress != null && !_emailAddress.isEmpty()) {
+                if(_webAddress == null || _webAddress.isEmpty()) {
+                    sb.append(";");
+                }
+                sb.append(" ");
+                sb.append(_emailAddress);
+            }
+            sb.append(")");
+            return sb.toString();
+        }
+
+        public UserAgent build() {
+            if (_userAgentString == null) {
+                _userAgentString = createUserAgentString();
+            }
+            return new UserAgent(this);
+        }
+
+    }
+
 }
